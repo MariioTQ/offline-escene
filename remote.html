@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OBS Remote</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0e1012;--panel:#161819;--card:#1c1e21;--border:#252830;--b2:#2e3240;
+  --text:#e8eaed;--dim:#6a7080;--green:#00d46a;--red:#ff3b3b;--blue:#2d7cf6;
+  --yellow:#f5a623;--live:#ff3040;
+  --f:'Barlow Condensed',sans-serif;--b:'Barlow',sans-serif;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--b);min-height:100vh;overscroll-behavior:none;}
+
+/* ── CONNECT ── */
+#cs{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.logo{font-family:var(--f);font-size:52px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,#fff 40%,var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.sub{font-family:var(--f);font-size:15px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:36px;}
+.card{background:var(--panel);border:1px solid var(--b2);border-radius:16px;padding:28px;width:100%;max-width:380px;}
+.card h2{font-family:var(--f);font-size:20px;font-weight:700;margin-bottom:18px;}
+label{display:block;font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.9px;margin-bottom:6px;}
+input[type=text],input[type=password]{width:100%;background:#0a0c0e;border:1px solid var(--b2);border-radius:9px;color:var(--text);font-family:var(--b);font-size:15px;padding:11px 14px;outline:none;transition:border .2s;}
+input:focus{border-color:var(--blue);}
+input::placeholder{color:#363a45;}
+.field{margin-bottom:14px;}
+.btn-con{width:100%;background:var(--blue);border:none;border-radius:9px;color:#fff;font-family:var(--f);font-size:18px;font-weight:700;padding:13px;cursor:pointer;margin-top:4px;}
+.btn-con:active{transform:scale(.98);}
+.cerr{margin-top:10px;background:#1e0a0a;border:1px solid #4a1515;border-radius:8px;padding:10px 14px;font-size:13px;color:#ff7070;display:none;}
+.cstatus{margin-top:10px;padding:9px 13px;border-radius:8px;font-size:13px;display:none;}
+.cstatus.ok{background:#0a1e12;border:1px solid #154a28;color:var(--green);}
+.cstatus.warn{background:#1e0a0a;border:1px solid #4a1515;color:#ff7070;}
+.chint{margin-top:16px;background:#0d1520;border:1px solid #1a2d4a;border-radius:10px;padding:13px;font-size:13px;line-height:1.65;color:#5a7a9a;}
+.chint strong{color:#6a9cc0;}
+code{background:#1a2d4a;padding:1px 5px;border-radius:3px;font-size:12px;}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;min-height:100vh;max-width:430px;margin:0 auto;}
+.topbar{background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:11px 15px;position:sticky;top:0;z-index:20;}
+.logo-badge{background:var(--red);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-family:var(--f);font-weight:800;font-size:12px;color:#fff;}
+.tbar-title{font-family:var(--f);font-size:19px;font-weight:700;margin-left:9px;}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.conn-dot.off{background:var(--dim);box-shadow:none;}
+.btn-disc{background:none;border:1px solid var(--b2);border-radius:6px;color:var(--dim);font-size:12px;padding:5px 10px;cursor:pointer;margin-left:9px;}
+.btn-disc:hover{border-color:var(--red);color:var(--red);}
+.content{flex:1;padding:8px 8px 84px;}
+
+/* ── SECTIONS ── */
+.sec{background:var(--panel);border:1px solid var(--border);border-radius:13px;margin-bottom:7px;overflow:hidden;}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;cursor:pointer;user-select:none;background:var(--card);border-bottom:1px solid var(--border);}
+.sec-hd:hover{background:#212428;}
+.sec-ttl{font-family:var(--f);font-size:15px;font-weight:700;letter-spacing:.5px;}
+.chevron{color:var(--dim);font-size:10px;transition:transform .2s;}
+.chevron.open{transform:rotate(180deg);}
+.sec-body{padding:10px;display:flex;flex-direction:column;gap:8px;}
+.sec-body.hidden{display:none;}
+
+/* ── BADGES ── */
+.badge{font-family:var(--f);font-size:11px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:4px;text-transform:uppercase;}
+.b-live{background:var(--live);color:#fff;animation:pr 1.4s ease-in-out infinite;}
+.b-off{background:#2a1212;color:#ff5555;border:1px solid #3d1515;}
+.b-ok{background:#0a2418;color:var(--green);border:1px solid #154a28;}
+.b-warn{background:#261e00;color:var(--yellow);border:1px solid #4a3800;}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgba(255,48,64,.5);}50%{box-shadow:0 0 0 5px rgba(255,48,64,0);}}
+
+/* ── STREAM ── */
+.stream-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.btn{display:flex;align-items:center;justify-content:center;border:none;border-radius:9px;font-family:var(--f);font-size:16px;font-weight:700;padding:12px 10px;cursor:pointer;transition:all .12s;}
+.btn:active{transform:scale(.96);}
+.btn-g{background:var(--green);color:#000;}
+.btn-r{background:var(--red);color:#fff;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.stat{background:#0f1113;border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center;}
+.stat-v{font-family:var(--f);font-size:21px;font-weight:700;}
+.stat-l{font-size:10px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.6px;}
+
+/* ── SCENES GRID ── */
+.scene-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stile{background:#1a1d22;border:2px solid var(--b2);border-radius:12px;cursor:pointer;position:relative;overflow:hidden;min-height:72px;display:flex;flex-direction:column;user-select:none;transition:border-color .15s,background .15s,transform .1s;}
+.stile:active{transform:scale(.94);}
+.stile.live{background:#091a10;border-color:var(--green);box-shadow:0 0 16px rgba(0,212,106,.2);}
+.stile:hover:not(.live){border-color:#3d4255;background:#1e2228;}
+.stile-body{flex:1;display:flex;align-items:center;justify-content:center;padding:14px 10px 10px;}
+.stile-name{font-family:var(--f);font-size:15px;font-weight:700;letter-spacing:.3px;text-align:center;line-height:1.25;color:var(--dim);}
+.stile.live .stile-name{color:#fff;}
+.stile-bar{height:3px;background:transparent;}
+.stile.live .stile-bar{background:var(--green);}
+.live-tag{position:absolute;top:5px;right:6px;background:var(--green);color:#000;font-family:var(--f);font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px;}
+
+/* ── AUDIO ── */
+.acard{background:#0f1113;border:1px solid var(--border);border-radius:10px;padding:11px 13px;}
+.atop{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.aname{font-family:var(--f);font-size:14px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.adb{font-family:var(--f);font-size:12px;color:var(--dim);min-width:44px;text-align:right;flex-shrink:0;}
+.mute-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid #3d1515;background:#1e0a0a;cursor:pointer;font-size:15px;flex-shrink:0;transition:all .12s;}
+.mute-btn.on{background:#0a1e12;border-color:#154a28;}
+.vol-row{display:flex;align-items:center;gap:8px;}
+.vol-ico{font-size:12px;color:var(--dim);flex-shrink:0;}
+input[type=range]{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--b2);outline:none;cursor:pointer;touch-action:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:none;}
+.vol-pct{font-family:var(--f);font-size:12px;color:var(--dim);min-width:32px;text-align:right;flex-shrink:0;}
+
+/* ── PREVIEW ── */
+.prev-wrap{position:relative;background:#080a0b;border-radius:10px;border:1px solid var(--border);overflow:hidden;min-height:80px;}
+.prev-wrap img{width:100%;display:block;}
+.prev-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;color:var(--dim);gap:7px;}
+.prev-overlay{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:6px 9px;}
+.prev-live{background:var(--live);color:#fff;font-family:var(--f);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;animation:pr 1.4s infinite;display:none;}
+.prev-live.show{display:block;}
+.prev-ts{background:rgba(0,0,0,.65);color:#aaa;font-family:var(--f);font-size:11px;padding:2px 7px;border-radius:4px;}
+
+/* ── GRAPH ── */
+.graph-wrap{background:#080a0b;border-radius:9px;border:1px solid var(--border);overflow:hidden;}
+canvas#bgraph{width:100%;height:80px;display:block;}
+.graph-leg{display:flex;justify-content:space-between;padding:4px 10px;font-size:11px;color:var(--dim);}
+
+/* ── FOOTER ── */
+.statusbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:9px 15px;z-index:20;}
+.spill{font-family:var(--f);font-size:13px;font-weight:700;letter-spacing:.5px;padding:5px 12px;border-radius:20px;text-transform:uppercase;}
+.spill.live{background:var(--live);color:#fff;}
+.spill.off{background:#1e0808;color:#ff5555;border:1px solid #3d1515;}
+.sup{color:var(--dim);font-size:13px;font-family:var(--f);font-weight:600;}
+.sbr{font-family:var(--f);font-size:13px;font-weight:700;color:var(--green);}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--b2);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:430px;text-align:center;}
+.modal-ico{font-size:38px;margin-bottom:10px;}
+.modal h3{font-family:var(--f);font-size:24px;font-weight:800;margin-bottom:8px;}
+.modal p{font-size:14px;color:var(--dim);margin-bottom:22px;line-height:1.5;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mbtn{border:none;border-radius:10px;font-family:var(--f);font-size:17px;font-weight:700;padding:14px;cursor:pointer;}
+.mbtn:active{transform:scale(.97);}
+.mbtn-cancel{background:var(--card);color:var(--dim);}
+.mbtn-green{background:var(--green);color:#000;}
+.mbtn-red{background:var(--red);color:#fff;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#151a2a;border:1px solid #2d4080;border-radius:8px;padding:9px 18px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:opacity .25s;z-index:150;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
+.toast.show{opacity:1;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- CONNECT -->
+<div id="cs">
+  <div class="logo">OBS Remote</div>
+  <div class="sub">Dashboard de Control</div>
+  <div class="card">
+    <h2>Conectar a OBS</h2>
+    <div class="field"><label>URL del WebSocket</label><input type="text" id="ws-url" placeholder="ws://192.168.68.102:4455"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="ws-pass" placeholder="Contraseña OBS"></div>
+    <button class="btn-con" id="btn-con" onclick="doConnect()">Conectar</button>
+    <div class="cerr" id="cerr"></div>
+    <div class="cstatus" id="cstatus"></div>
+    <div class="chint"><strong>En casa:</strong> <code>ws://192.168.68.102:4455</code><br><strong>Fuera:</strong> abre <code>INICIAR.bat</code> y la URL carga sola</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-ico" id="m-ico">⚡</div>
+    <h3 id="m-title">¿Confirmar?</h3>
+    <p id="m-msg">¿Seguro?</p>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="mbtn mbtn-green" id="m-ok" onclick="confirmModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;">
+      <div class="logo-badge">OBS</div>
+      <span class="tbar-title">Remote</span>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="btn-disc" onclick="doDisconnect()">Salir</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STREAM -->
+    <div class="sec">
+      <div class="sec-hd" onclick="toggleSec(this)">
+        <div style="display:flex;align-items:center;gap:9px;"><span class="sec-ttl">Stream</span><span class="badge b-off" id="stream-badge">OFFLINE</span></div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body">
+        <div class="stream-btns">
+          <button class="btn btn-g" onclick="askStream('start')">▶ &nbsp;Iniciar</button>
+          <button class="btn btn-r" onclick="askStream('stop')">■ &nbsp;Detener</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-v" id="s-fps">—</div><div class="stat-l">FPS</div></div>
+          <div class="stat"><div class="stat-v" id="s-drop">—</div><div class="stat-l">Dropped</div></div>
+          <div class="stat"><div class="stat-v" id="s-cpu">—</div><div class="stat-l">CPU</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BITRATE -->
+    <div class="sec">
+      <div class="sec-hd" onclick="toggleSec(this)">
+        <div style="display:flex;align-items:center;gap:9px;"><span class="sec-ttl">Bitrate</span><span class="badge b-ok" id="br-badge" style="font-size:10px;">— kbps</span></div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body">
+        <div class="graph-wrap"><canvas id="bgraph" height="80"></canvas></div>
+        <div class="graph-leg"><span id="g-min">Min: —</span><span>Último minuto</span><span id="g-max">Max: —</span></div>
+      </div>
+    </div>
+
+    <!-- SCENES -->
+    <div class="sec">
+      <div class="sec-hd" onclick="toggleSec(this)">
+        <div style="display:flex;align-items:center;gap:9px;"><span class="sec-ttl">Escenas</span><span class="badge b-ok" id="scene-count">0</span></div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body">
+        <div class="scene-grid" id="scene-grid"><div style="color:var(--dim);font-size:13px;text-align:center;padding:14px;grid-column:1/-1;">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- AUDIO -->
+    <div class="sec">
+      <div class="sec-hd" onclick="toggleSec(this)">
+        <div style="display:flex;align-items:center;gap:9px;"><span class="sec-ttl">Audio</span></div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body">
+        <div id="audio-list"><div style="color:var(--dim);font-size:13px;text-align:center;padding:14px;">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="sec">
+      <div class="sec-hd" onclick="toggleSec(this)">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span class="sec-ttl">Preview</span>
+          <span class="badge b-ok" style="font-size:10px;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:blink 2s infinite;"></span>Auto</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body">
+        <div class="prev-wrap" id="prev-wrap">
+          <div class="prev-ph"><span style="font-size:28px;">🎬</span><p style="font-size:12px;">Iniciando preview...</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="statusbar">
+    <span class="spill off" id="foot-status">OFFLINE</span>
+    <span class="sup" id="foot-uptime">00:00:00</span>
+    <span class="sbr" id="foot-br">— kbps</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════
+//  CONFIG — hardcoded for Mario
+// ════════════════════════════════════
+const JKEY = '$2a$10$Oq3I85gm1mvNu0MSgPJsr./itcDYzfySj6bTqbP9uCYXg6m68cDoy';
+const JID  = '69af96c7ae596e708f7358e0';
+const PASS = 'qHkaKn2nIcuEz9TA';
+
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+let ws = null, identified = false, mid = 1;
+const pend = {};
+let streaming = false, curScene = '', startTime = null;
+let scenes = [], audioInputs = {};
+let uptIv = null, statIv = null, prevIv = null;
+const brHist = new Array(60).fill(0);
+let gctx = null, lastB = 0, lastBt = 0;
+let modalAct = null;
+let prevBusy = false;
+
+// ════════════════════════════════════
+//  OBS WS v5
+// ════════════════════════════════════
+function obsConnect(url, pass) {
+  return new Promise((ok, fail) => {
+    url = url.trim();
+    if (url.startsWith('https://')) url = 'wss://' + url.slice(8);
+    if (url.startsWith('http://'))  url = 'ws://'  + url.slice(7);
+    try { ws = new WebSocket(url); } catch(e) { fail('URL inválida'); return; }
+    ws.onerror  = () => fail('No se pudo conectar');
+    ws.onclose  = (e) => { if (!identified) fail(e.reason || 'Sin respuesta'); else onDisco(); };
+    ws.onmessage = (ev) => onMsg(JSON.parse(ev.data), pass, ok, fail);
+  });
+}
+
+async function onMsg(msg, pass, ok, fail) {
+  const {op, d} = msg;
+  if (op === 0) {
+    let auth;
+    if (d.authentication) auth = await mkAuth(pass || '', d.authentication.challenge, d.authentication.salt);
+    sendRaw({op: 1, d: {rpcVersion: 1, authentication: auth, eventSubscriptions: 0xFFFFFFFF}});
+  } else if (op === 2) {
+    identified = true; ok();
+  } else if (op === 7) {
+    const cb = pend[d.requestId];
+    if (cb) {
+      delete pend[d.requestId];
+      if (d.requestStatus.result) cb.ok(d.responseData || {});
+      else cb.fail(d.requestStatus.comment || 'OBS error');
+    }
+  } else if (op === 5) {
+    onEv(d.eventType, d.eventData || {});
+  }
+}
+
+function sendRaw(o) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(o));
+}
+
+function call(type, data) {
+  return new Promise((ok, fail) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { fail('Sin conexión'); return; }
+    const id = String(mid++);
+    pend[id] = {ok, fail};
+    sendRaw({op: 6, d: {requestType: type, requestId: id, requestData: data || {}}});
+    setTimeout(() => { if (pend[id]) { delete pend[id]; fail('Timeout: ' + type); } }, 8000);
+  });
+}
+
+async function mkAuth(pass, challenge, salt) {
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    try {
+      const e = new TextEncoder();
+      const h1 = await crypto.subtle.digest('SHA-256', e.encode(pass + salt));
+      const b1 = btoa(String.fromCharCode(...new Uint8Array(h1)));
+      const h2 = await crypto.subtle.digest('SHA-256', e.encode(b1 + challenge));
+      return btoa(String.fromCharCode(...new Uint8Array(h2)));
+    } catch(e) {}
+  }
+  function sha(s){function rr(v,a){return(v>>>a)|(v<<(32-a))}const P=Math.pow,W=P(2,32);let r='',w=[],L=s.length*8,H=sha.h=sha.h||[],K=sha.k=sha.k||[],p=K.length,ic={};for(let c=2;p<64;c++){if(!ic[c]){for(let i=0;i<313;i+=c)ic[i]=c;H[p]=(P(c,.5)*W)|0;K[p++]=(P(c,1/3)*W)|0}}s+='\x80';while(s.length%64-56)s+='\x00';for(let i=0;i<s.length;i++){const j=s.charCodeAt(i);if(j>>8)return'';w[i>>2]|=j<<((3-i)%4*8)}w[w.length]=(L/W|0);w[w.length]=(L|0);for(let j=0;j<w.length;){const _w=w.slice(j,j+=16),oH=H.slice(0);for(let i=0;i<64;i++){const i2=i<16?_w[i]:(rr(_w[i-2],17)^rr(_w[i-2],19)^(_w[i-2]>>>10))+_w[i-7]+(rr(_w[i-15],7)^rr(_w[i-15],18)^(_w[i-15]>>>3))+_w[i-16];_w[i]=i2|0;const t1=H[7]+(rr(H[4],6)^rr(H[4],11)^rr(H[4],25))+((H[4]&H[5])^(~H[4]&H[6]))+K[i]+_w[i],t2=(rr(H[0],2)^rr(H[0],13)^rr(H[0],22))+((H[0]&H[1])^(H[0]&H[2])^(H[1]&H[2]));H=[(t1+t2)|0,...H];H[4]=(H[4]+t1)|0;H.length=8}H=H.map((x,i)=>(x+oH[i])|0)}for(let i=0;i<8;i++)for(let j=3;j+1;j--){const b=(H[i]>>(j*8))&255;r+=((b<16)?'0':'')+b.toString(16)}return r}
+  const b = h => { let s=''; for (let i=0;i<h.length;i+=2) s+=String.fromCharCode(parseInt(h.substr(i,2),16)); return btoa(s); };
+  return b(sha(b(sha(pass + salt)) + challenge));
+}
+
+function onEv(type, d) {
+  if (type === 'StreamStateChanged') {
+    streaming = d.outputActive; updateStreamUI();
+  } else if (type === 'CurrentProgramSceneChanged') {
+    curScene = d.sceneName; renderScenes();
+  } else if (type === 'InputMuteStateChanged') {
+    if (audioInputs[d.inputName]) { audioInputs[d.inputName].muted = d.inputMuted; renderAudio(); }
+  } else if (type === 'InputVolumeChanged') {
+    if (audioInputs[d.inputName]) { audioInputs[d.inputName].vol = Math.round(d.inputVolumeDb); audioInputs[d.inputName].volMul = d.inputVolumeMul; renderAudio(); }
+  }
+}
+
+// ════════════════════════════════════
+//  AUTO DETECT
+// ════════════════════════════════════
+async function autoDetect() {
+  document.getElementById('ws-pass').value = PASS;
+  const st = document.getElementById('cstatus');
+  const show = (msg, ok) => { st.textContent = msg; st.className = 'cstatus ' + (ok ? 'ok' : 'warn'); st.style.display = 'block'; };
+
+  try {
+    const r = await fetch('/tunnel', {signal: AbortSignal.timeout(1500)});
+    const url = await r.text();
+    if (url && url.startsWith('wss://')) {
+      document.getElementById('ws-url').value = url;
+      show('✅ Servidor local detectado', true); return;
+    }
+  } catch(e) {}
+
+  try {
+    const r = await fetch('https://api.jsonbin.io/v3/b/' + JID + '/latest', {headers: {'X-Master-Key': JKEY}});
+    const j = await r.json();
+    const url = j.record && j.record.tunnel;
+    if (url && url.startsWith('wss://')) {
+      document.getElementById('ws-url').value = url;
+      show('✅ URL cargada — presiona Conectar', true); return;
+    }
+  } catch(e) {}
+
+  show('⚠ Abre INICIAR.bat en tu PC primero', false);
+}
+
+// ════════════════════════════════════
+//  CONNECT
+// ════════════════════════════════════
+async function doConnect() {
+  const url  = document.getElementById('ws-url').value.trim();
+  const pass = document.getElementById('ws-pass').value;
+  const btn  = document.getElementById('btn-con');
+  const err  = document.getElementById('cerr');
+  if (!url) { err.textContent = '⚠ Ingresa la URL'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  btn.innerHTML = '<span class="spinner"></span>&nbsp;Conectando...';
+  btn.disabled = true;
+  try {
+    await obsConnect(url, pass);
+    await initDash();
+    document.getElementById('cs').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    startUptime();
+  } catch(e) {
+    err.textContent = '⚠ ' + (typeof e === 'string' ? e : 'Error de conexión');
+    err.style.display = 'block';
+    btn.innerHTML = 'Conectar'; btn.disabled = false;
+    ws = null; identified = false;
+  }
+}
+
+function doDisconnect() {
+  if (ws) { ws.close(); ws = null; }
+  identified = false;
+  clearInterval(uptIv); clearInterval(statIv); clearInterval(prevIv);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('cs').style.display = 'flex';
+  document.getElementById('btn-con').innerHTML = 'Conectar';
+  document.getElementById('btn-con').disabled = false;
+}
+
+function onDisco() {
+  document.getElementById('conn-dot').className = 'conn-dot off';
+  showToast('⚠ Conexión perdida');
+}
+
+// ════════════════════════════════════
+//  INIT
+// ════════════════════════════════════
+async function initDash() {
+  try {
+    const s = await call('GetStreamStatus');
+    streaming = s.outputActive;
+    if (streaming && s.outputTimecode) {
+      const p = s.outputTimecode.split(':');
+      startTime = Date.now() - (parseInt(p[0]) * 3600 + parseInt(p[1]) * 60 + parseFloat(p[2])) * 1000;
+    }
+  } catch(e) {}
+
+  try {
+    const s = await call('GetSceneList');
+    scenes = (s.scenes || []).map(sc => sc.sceneName).reverse();
+    curScene = s.currentProgramSceneName;
+  } catch(e) {}
+
+  updateStreamUI();
+  renderScenes();
+  await loadAudio(curScene);
+  startStats();
+  startPreview();
+  initGraph();
+}
+
+// ════════════════════════════════════
+//  STREAM
+// ════════════════════════════════════
+function askStream(act) {
+  modalAct = act;
+  if (act === 'start') {
+    document.getElementById('m-ico').textContent = '▶';
+    document.getElementById('m-title').textContent = 'Iniciar Stream';
+    document.getElementById('m-msg').textContent = '¿Quieres empezar a transmitir?';
+    document.getElementById('m-ok').className = 'mbtn mbtn-green';
+    document.getElementById('m-ok').textContent = 'Iniciar';
+  } else {
+    document.getElementById('m-ico').textContent = '■';
+    document.getElementById('m-title').textContent = 'Detener Stream';
+    document.getElementById('m-msg').textContent = '¿Seguro que quieres terminar?';
+    document.getElementById('m-ok').className = 'mbtn mbtn-red';
+    document.getElementById('m-ok').textContent = 'Detener';
+  }
+  document.getElementById('modal-ov').classList.add('show');
+}
+
+async function confirmModal() {
+  const act = modalAct;
+  closeModal();
+  if (act === 'start') {
+    try { await call('StartStream'); showToast('✓ Stream iniciado'); } catch(e) { showToast('⚠ ' + e); }
+  } else if (act === 'stop') {
+    try { await call('StopStream'); showToast('✓ Stream detenido'); } catch(e) { showToast('⚠ ' + e); }
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-ov').classList.remove('show');
+  modalAct = null;
+}
+
+function updateStreamUI() {
+  const badge = document.getElementById('stream-badge');
+  const foot  = document.getElementById('foot-status');
+  const lb    = document.getElementById('prev-live');
+  if (streaming) {
+    badge.textContent = 'LIVE';    badge.className = 'badge b-live';
+    foot.textContent  = 'LIVE';   foot.className  = 'spill live';
+    if (lb) lb.classList.add('show');
+    if (!startTime) startTime = Date.now();
+  } else {
+    badge.textContent = 'OFFLINE'; badge.className = 'badge b-off';
+    foot.textContent  = 'OFFLINE'; foot.className  = 'spill off';
+    if (lb) lb.classList.remove('show');
+    startTime = null;
+  }
+}
+
+// ════════════════════════════════════
+//  SCENES
+// ════════════════════════════════════
+function renderScenes() {
+  const grid = document.getElementById('scene-grid');
+  document.getElementById('scene-count').textContent = scenes.length;
+  if (!scenes.length) {
+    grid.innerHTML = '<div style="color:var(--dim);font-size:13px;text-align:center;padding:14px;grid-column:1/-1;">Sin escenas</div>';
+    return;
+  }
+  grid.innerHTML = scenes.map(name => {
+    const live = (name === curScene);
+    return `<div class="stile${live ? ' live' : ''}" onclick="switchScene(${JSON.stringify(name)})">
+      ${live ? '<div class="live-tag">LIVE</div>' : ''}
+      <div class="stile-body"><span class="stile-name">${name}</span></div>
+      <div class="stile-bar"></div>
+    </div>`;
+  }).join('');
+}
+
+async function switchScene(name) {
+  curScene = name;
+  renderScenes();
+  try {
+    await call('SetCurrentProgramScene', {sceneName: name});
+    showToast('✓ ' + name);
+  } catch(e) {
+    showToast('⚠ ' + e);
+  }
+  loadAudio(name);
+}
+
+// ════════════════════════════════════
+//  AUDIO
+// ════════════════════════════════════
+async function loadAudio(sceneName) {
+  if (!sceneName) return;
+  const audioKinds = new Set([
+    'wasapi_input_capture','wasapi_output_capture',
+    'coreaudio_input_capture','coreaudio_output_capture',
+    'pulse_input_capture','pulse_output_capture',
+    'alsa_input_capture','alsa_output_capture'
+  ]);
+  try {
+    const [sceneRes, inputRes] = await Promise.all([
+      call('GetSceneItemList', {sceneName}),
+      call('GetInputList')
+    ]);
+    const inScene = new Set((sceneRes.sceneItems || []).map(i => i.sourceName));
+    audioInputs = {};
+    for (const inp of (inputRes.inputs || [])) {
+      if (!audioKinds.has(inp.inputKind) && !inScene.has(inp.inputName)) continue;
+      try {
+        const [m, v] = await Promise.all([
+          call('GetInputMute',   {inputName: inp.inputName}),
+          call('GetInputVolume', {inputName: inp.inputName})
+        ]);
+        audioInputs[inp.inputName] = {
+          muted: m.inputMuted,
+          vol:   Math.round(v.inputVolumeDb),
+          mul:   v.inputVolumeMul
+        };
+      } catch(e) {}
+    }
+  } catch(e) {}
+  renderAudio();
+}
+
+function eid(n) { return n.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function renderAudio() {
+  const list = document.getElementById('audio-list');
+  const entries = Object.entries(audioInputs);
+  if (!entries.length) {
+    list.innerHTML = '<div style="color:var(--dim);font-size:13px;text-align:center;padding:14px;">Sin fuentes de audio</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([name, info]) => {
+    const pct = Math.round(Math.max(0, Math.min(1, info.mul || 0)) * 100);
+    const db  = info.vol > -100 ? info.vol + ' dB' : '-∞';
+    const nm  = JSON.stringify(name);
+    const id  = eid(name);
+    return `<div class="acard">
+      <div class="atop">
+        <span class="aname" title="${name}">${name}</span>
+        <span class="adb" id="adb-${id}">${db}</span>
+        <button class="mute-btn ${info.muted ? '' : 'on'}" id="amute-${id}" onclick="doMute(${nm})">${info.muted ? '🔇' : '🔊'}</button>
+      </div>
+      <div class="vol-row">
+        <span class="vol-ico">🔈</span>
+        <input type="range" min="0" max="1" step="0.01" value="${info.mul || 0}" id="avol-${id}"
+          oninput="previewVol(this,${nm})"
+          onchange="commitVol(this,${nm})">
+        <span class="vol-pct" id="apct-${id}">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function doMute(name) {
+  const info = audioInputs[name];
+  if (!info) return;
+  const newVal = !info.muted;
+  info.muted = newVal;
+  const id = eid(name);
+  const btn = document.getElementById('amute-' + id);
+  if (btn) { btn.textContent = newVal ? '🔇' : '🔊'; btn.className = 'mute-btn ' + (newVal ? '' : 'on'); }
+  try {
+    await call('SetInputMute', {inputName: name, inputMuted: newVal});
+  } catch(e) {
+    info.muted = !newVal;
+    if (btn) { btn.textContent = !newVal ? '🔇' : '🔊'; btn.className = 'mute-btn ' + (!newVal ? '' : 'on'); }
+    showToast('⚠ Mute error: ' + e);
+  }
+}
+
+function previewVol(slider, name) {
+  const val = parseFloat(slider.value);
+  const db  = val > 0 ? Math.round(20 * Math.log10(val)) : -100;
+  const id  = eid(name);
+  const dbEl  = document.getElementById('adb-'  + id);
+  const pctEl = document.getElementById('apct-' + id);
+  if (dbEl)  dbEl.textContent  = db > -100 ? db + ' dB' : '-∞';
+  if (pctEl) pctEl.textContent = Math.round(val * 100) + '%';
+}
+
+async function commitVol(slider, name) {
+  const val = parseFloat(slider.value);
+  if (audioInputs[name]) audioInputs[name].mul = val;
+  try { await call('SetInputVolume', {inputName: name, inputVolumeMul: val}); } catch(e) {}
+}
+
+// ════════════════════════════════════
+//  PREVIEW — 720p, fluido
+// ════════════════════════════════════
+function startPreview() {
+  doPreview();
+  prevIv = setInterval(doPreview, 800);
+}
+
+async function doPreview() {
+  if (prevBusy || !identified || !curScene) return;
+  prevBusy = true;
+  const wrap = document.getElementById('prev-wrap');
+  try {
+    const data = await call('GetSourceScreenshot', {
+      sourceName: curScene,
+      imageFormat: 'jpg',
+      imageWidth: 720,
+      imageCompressionQuality: 75
+    });
+    const ts = new Date().toLocaleTimeString('es-MX');
+    let img = wrap.querySelector('img');
+    if (!img) {
+      wrap.innerHTML = `<img src="${data.imageData}">
+        <div class="prev-overlay">
+          <div class="prev-live ${streaming ? 'show' : ''}" id="prev-live">● LIVE</div>
+          <div class="prev-ts" id="prev-ts">${ts}</div>
+        </div>`;
+    } else {
+      img.src = data.imageData;
+      const tsEl = document.getElementById('prev-ts');
+      if (tsEl) tsEl.textContent = ts;
+      const lb = document.getElementById('prev-live');
+      if (lb) lb.classList.toggle('show', streaming);
+    }
+  } catch(e) {}
+  prevBusy = false;
+}
+
+// ════════════════════════════════════
+//  STATS
+// ════════════════════════════════════
+function startStats() {
+  statIv = setInterval(async () => {
+    if (!identified) return;
+    try {
+      const s = await call('GetStats');
+      document.getElementById('s-fps').textContent  = s.activeFps != null ? s.activeFps.toFixed(1) : '—';
+      document.getElementById('s-drop').textContent = s.outputSkippedFrames != null ? s.outputSkippedFrames : '—';
+      document.getElementById('s-cpu').textContent  = s.cpuUsage != null ? s.cpuUsage.toFixed(1) + '%' : '—';
+    } catch(e) {}
+    if (streaming) {
+      try {
+        const s = await call('GetStreamStatus');
+        updateBR(s.outputBytes);
+      } catch(e) {}
+    }
+  }, 2000);
+}
+
+function updateBR(bytes) {
+  const now = Date.now();
+  let kbps = 0;
+  if (lastB > 0 && lastBt > 0) {
+    const ds = (now - lastBt) / 1000, db = bytes - lastB;
+    if (ds > 0 && db >= 0) kbps = Math.round(db * 8 / ds / 1000);
+  }
+  lastB = bytes; lastBt = now;
+  brHist.shift(); brHist.push(kbps);
+  const fmt = kbps > 0 ? kbps.toLocaleString() + ' kbps' : '—';
+  document.getElementById('foot-br').textContent = fmt;
+  const badge = document.getElementById('br-badge');
+  badge.textContent = kbps > 0 ? kbps.toLocaleString() + ' kbps' : '—';
+  badge.className = 'badge ' + (kbps > 3000 ? 'b-ok' : kbps > 1000 ? 'b-warn' : 'b-off');
+  drawGraph();
+}
+
+// ════════════════════════════════════
+//  GRAPH
+// ════════════════════════════════════
+function initGraph() {
+  const c = document.getElementById('bgraph');
+  gctx = c.getContext('2d');
+  c.width  = c.offsetWidth * devicePixelRatio;
+  c.height = 80 * devicePixelRatio;
+  gctx.scale(devicePixelRatio, devicePixelRatio);
+  drawGraph();
+}
+
+function drawGraph() {
+  if (!gctx) return;
+  const c = document.getElementById('bgraph'), w = c.offsetWidth, h = 80, d = brHist;
+  gctx.clearRect(0, 0, w, h);
+  const mx = Math.max(...d, 1000);
+  gctx.strokeStyle = 'rgba(255,255,255,.035)'; gctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) { gctx.beginPath(); gctx.moveTo(0, h/4*i); gctx.lineTo(w, h/4*i); gctx.stroke(); }
+  const gr = gctx.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, 'rgba(0,212,106,.3)'); gr.addColorStop(1, 'rgba(0,212,106,.01)');
+  gctx.fillStyle = gr; gctx.beginPath(); gctx.moveTo(0, h);
+  d.forEach((v, i) => gctx.lineTo(i/(d.length-1)*w, h-(v/mx)*(h-5)));
+  gctx.lineTo(w, h); gctx.closePath(); gctx.fill();
+  gctx.strokeStyle = '#00d46a'; gctx.lineWidth = 1.5; gctx.lineJoin = 'round'; gctx.beginPath();
+  d.forEach((v, i) => { const x=i/(d.length-1)*w, y=h-(v/mx)*(h-5); i===0?gctx.moveTo(x,y):gctx.lineTo(x,y); });
+  gctx.stroke();
+  const pos = d.filter(v => v > 0);
+  if (pos.length) { document.getElementById('g-min').textContent = 'Min: ' + Math.min(...pos).toLocaleString(); document.getElementById('g-max').textContent = 'Max: ' + Math.max(...pos).toLocaleString(); }
+}
+
+// ════════════════════════════════════
+//  UPTIME
+// ════════════════════════════════════
+function startUptime() {
+  uptIv = setInterval(() => {
+    if (!streaming || !startTime) { document.getElementById('foot-uptime').textContent = '00:00:00'; return; }
+    const e = Date.now() - startTime;
+    const h = Math.floor(e/3600000), m = Math.floor(e%3600000/60000), s = Math.floor(e%60000/1000);
+    document.getElementById('foot-uptime').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+}
+
+// ════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════
+function toggleSec(hd) {
+  const body = hd.nextElementSibling, ch = hd.querySelector('.chevron');
+  if (!body) return;
+  body.classList.toggle('hidden'); ch.classList.toggle('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+window.addEventListener('resize', initGraph);
+setInterval(() => {
+  if (document.getElementById('app').style.display !== 'none' && (!ws || ws.readyState !== WebSocket.OPEN))
+    document.getElementById('conn-dot').className = 'conn-dot off';
+}, 3000);
+
+autoDetect();
+</script>
+</body>
+</html>
