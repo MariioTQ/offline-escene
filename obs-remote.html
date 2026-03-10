@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OBS Remote</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#111315;
+  --panel:#1a1c1f;
+  --card:#1f2226;
+  --border:#2a2d32;
+  --border2:#333740;
+  --text:#e8eaed;
+  --dim:#7a8090;
+  --green:#00d46a;
+  --green-dark:#00a352;
+  --red:#ff3b3b;
+  --red-dark:#cc2020;
+  --blue:#2d7cf6;
+  --blue-dark:#1a5fd4;
+  --yellow:#f5a623;
+  --yellow-dark:#c8851a;
+  --live:#ff4040;
+  --font:'Barlow Condensed',sans-serif;
+  --body:'Barlow',sans-serif;
+}
+
+html,body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overscroll-behavior:none;}
+
+/* ─── CONNECT SCREEN ─── */
+#connect-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:24px;
+}
+.connect-logo{
+  font-family:var(--font);font-size:48px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,#fff 40%,var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:4px;
+}
+.connect-sub{font-family:var(--font);font-size:16px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;}
+.connect-card{
+  background:var(--panel);border:1px solid var(--border2);border-radius:14px;
+  padding:28px;width:100%;max-width:380px;
+}
+.connect-card h2{font-family:var(--font);font-size:20px;font-weight:700;margin-bottom:20px;color:var(--text);}
+label{display:block;font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+input{
+  width:100%;background:#0d0f11;border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);font-family:var(--body);font-size:15px;padding:11px 14px;
+  outline:none;transition:border .2s;
+}
+input:focus{border-color:var(--blue);}
+input::placeholder{color:#404550;}
+.field{margin-bottom:16px;}
+.btn-connect{
+  width:100%;background:var(--blue);border:none;border-radius:8px;color:#fff;
+  font-family:var(--font);font-size:18px;font-weight:700;letter-spacing:.5px;
+  padding:13px;cursor:pointer;transition:background .15s,transform .08s;margin-top:4px;
+}
+.btn-connect:hover{background:var(--blue-dark);}
+.btn-connect:active{transform:scale(.98);}
+.connect-hint{
+  margin-top:20px;background:#0d1520;border:1px solid #1a2d4a;border-radius:10px;
+  padding:14px;font-size:13px;line-height:1.6;color:#6a8ab0;
+}
+.connect-hint strong{color:#7fb3e8;font-weight:600;}
+.connect-err{
+  margin-top:12px;background:#1e0808;border:1px solid #4a1010;border-radius:8px;
+  padding:10px 14px;font-size:13px;color:#ff7070;display:none;
+}
+
+/* ─── MAIN APP ─── */
+#app{display:none;flex-direction:column;min-height:100vh;max-width:420px;margin:0 auto;}
+
+/* TOPBAR */
+.topbar{
+  background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;position:sticky;top:0;z-index:20;
+}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.logo-badge{
+  background:var(--red);border-radius:6px;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font);font-weight:800;font-size:13px;color:#fff;letter-spacing:-.5px;flex-shrink:0;
+}
+.topbar-title{font-family:var(--font);font-size:20px;font-weight:700;letter-spacing:.3px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);flex-shrink:0;}
+.conn-dot.off{background:var(--dim);box-shadow:none;}
+.btn-disc{
+  background:none;border:1px solid var(--border2);border-radius:6px;color:var(--dim);
+  font-family:var(--body);font-size:12px;padding:5px 10px;cursor:pointer;transition:all .15s;
+}
+.btn-disc:hover{border-color:var(--red);color:var(--red);}
+
+/* CONTENT */
+.content{flex:1;padding:10px 10px 80px;}
+
+/* SECTIONS */
+.section{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  margin-bottom:8px;overflow:hidden;
+}
+.sec-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;cursor:pointer;user-select:none;
+  background:var(--card);border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.sec-head:hover{background:#252830;}
+.sec-head-left{display:flex;align-items:center;gap:10px;}
+.sec-title{font-family:var(--font);font-size:16px;font-weight:700;letter-spacing:.4px;}
+.chevron{color:var(--dim);font-size:11px;transition:transform .2s;}
+.chevron.open{transform:rotate(180deg);}
+.sec-body{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.sec-body.hidden{display:none;}
+
+/* BADGES */
+.badge{
+  font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:.5px;
+  padding:3px 8px;border-radius:4px;text-transform:uppercase;
+}
+.badge-live{background:var(--live);color:#fff;animation:pulse-red 1.5s ease-in-out infinite;}
+.badge-offline{background:#2a1515;color:#ff5555;border:1px solid #3d1515;}
+.badge-ok{background:#0d2a1a;color:var(--green);border:1px solid #1a4a2a;}
+.badge-warn{background:#2a1f00;color:var(--yellow);border:1px solid #4a3500;}
+
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(255,64,64,.5);}50%{box-shadow:0 0 0 6px rgba(255,64,64,0);}}
+
+/* STREAM BUTTONS */
+.stream-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  border:none;border-radius:8px;font-family:var(--font);font-size:16px;font-weight:700;
+  letter-spacing:.3px;padding:11px 10px;cursor:pointer;transition:all .12s;
+  position:relative;overflow:hidden;
+}
+.btn:active{transform:scale(.96);}
+.btn.loading::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.15) 50%,transparent 100%);
+  animation:shimmer .8s infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+.btn-green{background:var(--green);color:#000;}
+.btn-green:hover{background:#00e874;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-red:hover{background:#ff5555;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{background:#4d96ff;}
+.btn-yellow{background:var(--yellow);color:#000;}
+.btn-yellow:hover{background:#ffbe4d;}
+.btn-gray{background:#2a2d32;color:var(--text);border:1px solid var(--border2);}
+.btn-gray:hover{background:#333740;}
+.btn-full{grid-column:1/-1;}
+.btn-sm{font-size:13px;padding:8px 10px;}
+.btn-muted{background:#1e0d0d;color:var(--red);border:1px solid #3d1515;}
+.btn-muted:hover{background:#2d1010;}
+
+/* INGEST CARD */
+.ingest-card{
+  background:#161820;border:1px solid var(--border);border-radius:10px;padding:12px;
+}
+.ingest-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.ingest-name{display:flex;align-items:center;gap:8px;font-family:var(--font);font-size:15px;font-weight:700;}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--green);box-shadow:0 0 7px var(--green);}
+.dot-red{background:var(--red);}
+.dot-gray{background:var(--dim);}
+.ingest-stats{display:flex;align-items:center;gap:8px;}
+.bitrate-val{font-family:var(--font);font-size:15px;font-weight:700;color:var(--green);}
+.bitrate-val.warn{color:var(--yellow);}
+.bitrate-val.bad{color:var(--red);}
+.ingest-btns{display:grid;grid-template-columns:1fr 1fr 80px;gap:6px;}
+
+/* SCENES */
+.scene-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.scene-btn{
+  background:#161820;border:1px solid var(--border);border-radius:9px;
+  font-family:var(--font);font-size:14px;font-weight:600;letter-spacing:.3px;
+  color:var(--dim);padding:10px 8px;cursor:pointer;transition:all .15s;text-align:center;
+  position:relative;overflow:hidden;
+}
+.scene-btn:hover{border-color:var(--blue);color:var(--text);}
+.scene-btn.active{
+  background:#0d1e38;border-color:var(--blue);color:#fff;
+  box-shadow:0 0 12px rgba(45,124,246,.25);
+}
+.scene-btn.active::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--blue);
+}
+
+/* AUDIO INPUTS */
+.audio-row{
+  display:flex;align-items:center;gap:8px;
+  background:#161820;border:1px solid var(--border);border-radius:9px;padding:10px 12px;
+}
+.audio-name{flex:1;font-size:14px;font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.audio-vol{
+  font-family:var(--font);font-size:13px;color:var(--dim);
+  min-width:38px;text-align:right;flex-shrink:0;
+}
+.mute-btn{
+  background:#1e0d0d;border:1px solid #3d1515;border-radius:6px;
+  color:var(--red);font-size:14px;padding:6px 8px;cursor:pointer;transition:all .12s;flex-shrink:0;
+}
+.mute-btn:hover{background:#2d1010;}
+.mute-btn.unmuted{background:#0d1e12;border-color:#1a4a2a;color:var(--green);}
+.mute-btn.unmuted:hover{background:#0d2a1a;}
+
+/* PREVIEW */
+.preview-box{
+  border-radius:9px;overflow:hidden;background:#0a0c0e;
+  border:1px solid var(--border);position:relative;
+}
+.preview-box img{width:100%;height:auto;display:block;min-height:80px;}
+.preview-placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px;color:var(--dim);text-align:center;gap:8px;
+}
+.preview-placeholder span{font-size:32px;}
+.preview-placeholder p{font-size:13px;}
+.preview-ts{
+  position:absolute;bottom:6px;right:8px;
+  background:rgba(0,0,0,.7);border-radius:4px;padding:2px 6px;
+  font-size:11px;color:#aaa;font-family:var(--font);
+}
+.refresh-btn{
+  width:100%;background:#161820;border:1px solid var(--border);border-radius:8px;
+  color:var(--dim);font-family:var(--font);font-size:14px;font-weight:600;
+  padding:9px;cursor:pointer;transition:all .15s;margin-top:6px;
+}
+.refresh-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+/* BITRATE GRAPH */
+.graph-wrap{background:#0d0f11;border-radius:8px;border:1px solid var(--border);overflow:hidden;}
+canvas#bitrateGraph{width:100%;height:80px;display:block;}
+.graph-legend{display:flex;justify-content:space-between;padding:5px 10px;font-size:11px;color:var(--dim);}
+
+/* STATS STRIP */
+.stats-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+}
+.stat-card{
+  background:#161820;border:1px solid var(--border);border-radius:9px;
+  padding:10px;text-align:center;
+}
+.stat-val{font-family:var(--font);font-size:20px;font-weight:700;color:var(--text);}
+.stat-lbl{font-size:11px;color:var(--dim);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* FOOTER STATUS BAR */
+.status-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:420px;
+  background:var(--panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;z-index:20;
+}
+.status-pill{
+  font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:.5px;
+  padding:5px 12px;border-radius:20px;text-transform:uppercase;
+}
+.sp-live{background:var(--live);color:#fff;}
+.sp-offline{background:#1e0808;color:#ff5555;border:1px solid #3d1515;}
+.sp-uptime{color:var(--dim);font-size:13px;font-family:var(--font);font-weight:600;}
+.sp-bitrate{
+  font-family:var(--font);font-size:13px;font-weight:700;
+  color:var(--green);letter-spacing:.3px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  background:#1a2035;border:1px solid var(--blue);border-radius:8px;
+  padding:10px 18px;font-size:14px;color:var(--text);
+  opacity:0;pointer-events:none;transition:opacity .3s;z-index:100;white-space:nowrap;
+}
+.toast.show{opacity:1;}
+
+/* Loading spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ CONNECT SCREEN ═══════════════ -->
+<div id="connect-screen">
+  <div class="connect-logo">OBS Remote</div>
+  <div class="connect-sub">Dashboard de Control</div>
+  <div class="connect-card">
+    <h2>Conectar a OBS</h2>
+    <div class="field">
+      <label>URL del WebSocket</label>
+      <input type="text" id="ws-url" placeholder="wss://tu-tunnel.trycloudflare.com" value="">
+    </div>
+    <div class="field">
+      <label>Contraseña (si tienes)</label>
+      <input type="password" id="ws-pass" placeholder="Dejar vacío si no hay contraseña">
+    </div>
+    <button class="btn-connect" id="btn-connect" onclick="doConnect()">
+      Conectar
+    </button>
+    <div class="connect-err" id="conn-err"></div>
+    <div class="connect-hint">
+      <strong>¿Cómo funciona?</strong><br>
+      1. En OBS: <strong>Herramientas → WebSocket Server Settings</strong> → activar<br>
+      2. Instala <strong>cloudflared</strong> y ejecuta:<br>
+      <code style="background:#1a2d4a;padding:2px 6px;border-radius:4px;font-size:12px;">cloudflared tunnel --url ws://localhost:4455</code><br>
+      3. Pega la URL <strong>wss://...</strong> que te da arriba
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-badge">OBS</div>
+      <span class="topbar-title">Remote</span>
+    </div>
+    <div class="topbar-right">
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="btn-disc" onclick="doDisconnect()">Desconectar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── STREAM CONTROL ── -->
+    <div class="section">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-head-left">
+          <span class="sec-title">Stream</span>
+          <span class="badge badge-offline" id="stream-badge">OFFLINE</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body" id="sec-stream">
+        <div class="stream-btns">
+          <button class="btn btn-green" id="btn-start" onclick="startStream()">
+            ▶ Iniciar
+          </button>
+          <button class="btn btn-red" id="btn-stop" onclick="stopStream()">
+            ■ Detener
+          </button>
+        </div>
+        <div class="stats-strip">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-fps">—</div>
+            <div class="stat-lbl">FPS</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-dropped">—</div>
+            <div class="stat-lbl">Dropped</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-cpu">—</div>
+            <div class="stat-lbl">CPU</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BITRATE GRAPH ── -->
+    <div class="section">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-head-left">
+          <span class="sec-title">Bitrate</span>
+          <span class="badge badge-ok" id="bitrate-badge" style="font-size:11px;">— kbps</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body" id="sec-bitrate">
+        <div class="graph-wrap">
+          <canvas id="bitrateGraph" height="80"></canvas>
+        </div>
+        <div class="graph-legend">
+          <span id="graph-min">Min: —</span>
+          <span>Último minuto</span>
+          <span id="graph-max">Max: —</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ESCENAS ── -->
+    <div class="section">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-head-left">
+          <span class="sec-title">Escenas</span>
+          <span class="badge badge-ok" id="scene-badge">—</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body" id="sec-scenes">
+        <div class="scene-grid" id="scene-grid">
+          <div style="color:var(--dim);font-size:13px;grid-column:1/-1;text-align:center;padding:12px;">Cargando escenas...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUDIO ── -->
+    <div class="section">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-head-left">
+          <span class="sec-title">Audio</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body" id="sec-audio">
+        <div id="audio-list" style="display:flex;flex-direction:column;gap:6px;">
+          <div style="color:var(--dim);font-size:13px;text-align:center;padding:12px;">Cargando fuentes de audio...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PREVIEW ── -->
+    <div class="section">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-head-left">
+          <span class="sec-title">Preview</span>
+          <span class="badge badge-warn" style="font-size:11px;">Snapshot</span>
+        </div>
+        <span class="chevron open">▼</span>
+      </div>
+      <div class="sec-body" id="sec-preview">
+        <div class="preview-box" id="preview-box">
+          <div class="preview-placeholder">
+            <span>🎬</span>
+            <p>Haz clic en "Actualizar" para ver el preview</p>
+          </div>
+          <div class="preview-ts" id="preview-ts"></div>
+        </div>
+        <button class="refresh-btn" onclick="refreshPreview()">⟳ &nbsp;Actualizar Preview</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- FOOTER -->
+  <div class="status-bar">
+    <span class="status-pill sp-offline" id="footer-status">OFFLINE</span>
+    <span class="sp-uptime" id="footer-uptime">00:00:00</span>
+    <span class="sp-bitrate" id="footer-bitrate">— kbps</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  OBS WebSocket v5 — raw implementation
+//  (No external libs, puro WebSocket nativo)
+// ═══════════════════════════════════════════
+
+let ws = null;
+let identified = false;
+let msgId = 1;
+const pending = {};
+
+// State
+let isStreaming = false;
+let currentScene = '';
+let streamStartTime = null;
+let uptimeInterval = null;
+let statsInterval = null;
+let scenes = [];
+let audioInputs = {};  // name -> {muted, vol}
+
+// Bitrate graph data (last 60 samples)
+const bitrateHistory = new Array(60).fill(0);
+let graphCtx = null;
+
+// ─── OBS WS Protocol v5 helpers ───
+function obsConnect(url, password) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Auto-convert https:// or http:// to wss:// or ws://
+      url = url.trim();
+      if (url.startsWith('https://')) url = 'wss://' + url.slice(8);
+      if (url.startsWith('http://'))  url = 'ws://'  + url.slice(7);
+      // ngrok requires the Upgrade header — browsers handle this automatically
+      // but we need to pass the ngrok-skip-browser-warning header via subprotocol trick
+      ws = new WebSocket(url);
+    } catch(e) {
+      reject('URL inválida');
+      return;
+    }
+    ws.onopen = () => {};
+    ws.onerror = () => reject('No se pudo conectar. Verifica la URL y que OBS esté corriendo.');
+    ws.onclose = (e) => {
+      if (!identified) reject('Conexión cerrada: ' + (e.reason || 'sin respuesta'));
+      else onDisconnected();
+    };
+    ws.onmessage = async (event) => {
+      const msg = JSON.parse(event.data);
+      await handleMessage(msg, password, resolve, reject);
+    };
+  });
+}
+
+async function handleMessage(msg, password, resolve, reject) {
+  const op = msg.op;
+
+  if (op === 0) {
+    // Hello — send Identify
+    const d = msg.d;
+    let auth = undefined;
+    if (d.authentication) {
+      auth = await generateAuth(password || '', d.authentication.challenge, d.authentication.salt);
+    }
+    sendRaw({ op: 1, d: { rpcVersion: 1, authentication: auth, eventSubscriptions: 0xFFFFFFFF } });
+  }
+  else if (op === 2) {
+    // Identified
+    identified = true;
+    resolve();
+  }
+  else if (op === 7) {
+    // RequestResponse
+    const id = msg.d.requestId;
+    if (pending[id]) {
+      const { resolve: res, reject: rej } = pending[id];
+      delete pending[id];
+      if (msg.d.requestStatus.result) res(msg.d.responseData || {});
+      else rej(msg.d.requestStatus.comment || 'Error');
+    }
+  }
+  else if (op === 5) {
+    // Event
+    handleEvent(msg.d.eventType, msg.d.eventData);
+  }
+}
+
+async function generateAuth(password, challenge, salt) {
+  // Works on both http and https contexts
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    try {
+      const enc = new TextEncoder();
+      const pass = enc.encode(password + salt);
+      const hash1 = await crypto.subtle.digest('SHA-256', pass);
+      const b64_1 = btoa(String.fromCharCode(...new Uint8Array(hash1)));
+      const combined = enc.encode(b64_1 + challenge);
+      const hash2 = await crypto.subtle.digest('SHA-256', combined);
+      return btoa(String.fromCharCode(...new Uint8Array(hash2)));
+    } catch(e) {}
+  }
+  // Fallback: pure JS SHA-256
+  function sha256(str) {
+    function rightRotate(value, amount) { return (value>>>amount)|(value<<(32-amount)); }
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let result = '';
+    const words = [];
+    const asciiBitLength = str.length * 8;
+    let hash = sha256.h = sha256.h || [];
+    let k = sha256.k = sha256.k || [];
+    let primeCounter = k.length;
+    const isComposite = {};
+    for (let candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+        hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
+        k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
+      }
+    }
+    str += '\x80';
+    while (str.length%64 - 56) str += '\x00';
+    for (let i = 0; i < str.length; i++) {
+      const j = str.charCodeAt(i);
+      if (j>>8) return '';
+      words[i>>2] |= j << ((3-i)%4*8);
+    }
+    words[words.length] = ((asciiBitLength/maxWord)|0);
+    words[words.length] = (asciiBitLength|0);
+    for (let j = 0; j < words.length;) {
+      const w = words.slice(j, j+=16);
+      const oldHash = hash.slice(0);
+      for (let i = 0; i < 64; i++) {
+        const i2 = i < 16 ? w[i] : (
+          rightRotate(w[i-2], 17) ^ rightRotate(w[i-2], 19) ^ (w[i-2]>>>10)) +
+          w[i-7] + (rightRotate(w[i-15], 7) ^ rightRotate(w[i-15], 18) ^ (w[i-15]>>>3)) + w[i-16];
+        w[i] = i2|0;
+        const t1 = hash[7] + (rightRotate(hash[4],6)^rightRotate(hash[4],11)^rightRotate(hash[4],25)) +
+          ((hash[4]&hash[5])^(~hash[4]&hash[6])) + k[i] + w[i];
+        const t2 = (rightRotate(hash[0],2)^rightRotate(hash[0],13)^rightRotate(hash[0],22)) +
+          ((hash[0]&hash[1])^(hash[0]&hash[2])^(hash[1]&hash[2]));
+        hash = [(t1+t2)|0,...hash];
+        hash[4] = (hash[4]+t1)|0;
+        hash.length = 8;
+      }
+      hash = hash.map((x, i) => (x+oldHash[i])|0);
+    }
+    for (let i = 0; i < 8; i++) {
+      for (let j = 3; j+1; j--) {
+        const b = (hash[i]>>(j*8))&255;
+        result += ((b < 16)?'0':'') + b.toString(16);
+      }
+    }
+    return result;
+  }
+  function hexToB64(hex) {
+    let bin = '';
+    for (let i = 0; i < hex.length; i+=2) bin += String.fromCharCode(parseInt(hex.substr(i,2),16));
+    return btoa(bin);
+  }
+  function strToHexSha256(s) {
+    // convert string to latin1 bytes for sha256
+    return sha256(s);
+  }
+  const b64_1 = hexToB64(sha256(password + salt));
+  return hexToB64(sha256(b64_1 + challenge));
+}
+
+function sendRaw(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function obsCall(type, data) {
+  return new Promise((resolve, reject) => {
+    const id = String(msgId++);
+    pending[id] = { resolve, reject };
+    sendRaw({ op: 6, d: { requestType: type, requestId: id, requestData: data || {} } });
+    setTimeout(() => {
+      if (pending[id]) {
+        delete pending[id];
+        reject('Timeout');
+      }
+    }, 8000);
+  });
+}
+
+function handleEvent(type, data) {
+  if (type === 'StreamStateChanged') {
+    isStreaming = data.outputActive;
+    updateStreamUI();
+  }
+  else if (type === 'CurrentProgramSceneChanged') {
+    currentScene = data.sceneName;
+    updateSceneUI();
+  }
+  else if (type === 'InputMuteStateChanged') {
+    if (audioInputs[data.inputName] !== undefined) {
+      audioInputs[data.inputName].muted = data.inputMuted;
+      renderAudio();
+    }
+  }
+  else if (type === 'InputVolumeChanged') {
+    if (audioInputs[data.inputName] !== undefined) {
+      audioInputs[data.inputName].vol = Math.round(data.inputVolumeDb);
+      renderAudio();
+    }
+  }
+}
+
+// ─── CONNECT FLOW ───
+async function doConnect() {
+  const url = document.getElementById('ws-url').value.trim();
+  const pass = document.getElementById('ws-pass').value;
+  const err = document.getElementById('conn-err');
+  const btn = document.getElementById('btn-connect');
+
+  if (!url) { showErr('Ingresa la URL del WebSocket'); return; }
+
+  err.style.display = 'none';
+  btn.innerHTML = '<span class="spinner"></span> Conectando...';
+  btn.disabled = true;
+
+  try {
+    await obsConnect(url, pass);
+    await initDashboard();
+    showApp();
+  } catch(e) {
+    showErr(typeof e === 'string' ? e : 'Error de conexión');
+    btn.innerHTML = 'Conectar';
+    btn.disabled = false;
+    ws = null;
+    identified = false;
+  }
+}
+
+function showErr(msg) {
+  const err = document.getElementById('conn-err');
+  err.textContent = '⚠ ' + msg;
+  err.style.display = 'block';
+}
+
+async function initDashboard() {
+  // Stream status
+  try {
+    const s = await obsCall('GetStreamStatus');
+    isStreaming = s.outputActive;
+    if (isStreaming && s.outputTimecode) {
+      streamStartTime = Date.now() - parseTimecode(s.outputTimecode);
+    }
+  } catch(e) {}
+
+  // Scenes
+  try {
+    const s = await obsCall('GetSceneList');
+    scenes = s.scenes.map(sc => sc.sceneName).reverse();
+    currentScene = s.currentProgramSceneName;
+  } catch(e) {}
+
+  // Audio inputs
+  try {
+    const inp = await obsCall('GetInputList');
+    const audioKinds = ['wasapi_input_capture','wasapi_output_capture','coreaudio_input_capture','coreaudio_output_capture','pulse_input_capture','pulse_output_capture','alsa_input_capture','alsa_output_capture','v4l2_input','dshow_input','audio_line'];
+    audioInputs = {};
+    for (const input of inp.inputs) {
+      try {
+        const muted = await obsCall('GetInputMute', { inputName: input.inputName });
+        const vol = await obsCall('GetInputVolume', { inputName: input.inputName });
+        audioInputs[input.inputName] = {
+          muted: muted.inputMuted,
+          vol: Math.round(vol.inputVolumeDb),
+          kind: input.inputKind
+        };
+      } catch(e) {}
+    }
+  } catch(e) {}
+
+  updateStreamUI();
+  renderScenes();
+  renderAudio();
+  startStats();
+  initGraph();
+}
+
+function parseTimecode(tc) {
+  // "HH:MM:SS.mmm"
+  const parts = tc.split(':');
+  const h = parseInt(parts[0]) * 3600000;
+  const m = parseInt(parts[1]) * 60000;
+  const s = parseFloat(parts[2]) * 1000;
+  return h + m + s;
+}
+
+function showApp() {
+  document.getElementById('connect-screen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  startUptimeTimer();
+}
+
+function doDisconnect() {
+  if (ws) { ws.close(); ws = null; }
+  identified = false;
+  clearInterval(uptimeInterval);
+  clearInterval(statsInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('connect-screen').style.display = 'flex';
+  document.getElementById('btn-connect').innerHTML = 'Conectar';
+  document.getElementById('btn-connect').disabled = false;
+  document.getElementById('ws-pass').value = '';
+}
+
+function onDisconnected() {
+  document.getElementById('conn-dot').className = 'conn-dot off';
+  showToast('⚠ Conexión perdida');
+}
+
+// ─── STREAM CONTROL ───
+async function startStream() {
+  const btn = document.getElementById('btn-start');
+  btn.classList.add('loading');
+  try {
+    await obsCall('StartStream');
+    showToast('✓ Stream iniciado');
+  } catch(e) { showToast('Error: ' + e); }
+  btn.classList.remove('loading');
+}
+
+async function stopStream() {
+  const btn = document.getElementById('btn-stop');
+  btn.classList.add('loading');
+  try {
+    await obsCall('StopStream');
+    showToast('✓ Stream detenido');
+  } catch(e) { showToast('Error: ' + e); }
+  btn.classList.remove('loading');
+}
+
+function updateStreamUI() {
+  const badge = document.getElementById('stream-badge');
+  const footerStatus = document.getElementById('footer-status');
+
+  if (isStreaming) {
+    badge.textContent = 'LIVE';
+    badge.className = 'badge badge-live';
+    footerStatus.textContent = 'LIVE';
+    footerStatus.className = 'status-pill sp-live';
+    if (!streamStartTime) streamStartTime = Date.now();
+  } else {
+    badge.textContent = 'OFFLINE';
+    badge.className = 'badge badge-offline';
+    footerStatus.textContent = 'OFFLINE';
+    footerStatus.className = 'status-pill sp-offline';
+    streamStartTime = null;
+  }
+}
+
+// ─── SCENES ───
+function renderScenes() {
+  const grid = document.getElementById('scene-grid');
+  if (!scenes.length) {
+    grid.innerHTML = '<div style="color:var(--dim);font-size:13px;grid-column:1/-1;text-align:center;padding:12px;">Sin escenas</div>';
+    return;
+  }
+  grid.innerHTML = scenes.map(name => `
+    <button class="scene-btn ${name === currentScene ? 'active' : ''}"
+      onclick="switchScene('${name.replace(/'/g,"\\'")}')">
+      ${name}
+    </button>
+  `).join('');
+  const badge = document.getElementById('scene-badge');
+  badge.textContent = currentScene || '—';
+}
+
+function updateSceneUI() {
+  document.getElementById('scene-badge').textContent = currentScene;
+  document.querySelectorAll('.scene-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === currentScene);
+  });
+}
+
+async function switchScene(name) {
+  try {
+    await obsCall('SetCurrentProgramScene', { sceneName: name });
+    currentScene = name;
+    updateSceneUI();
+    showToast('Escena: ' + name);
+  } catch(e) { showToast('Error: ' + e); }
+}
+
+// ─── AUDIO ───
+function renderAudio() {
+  const list = document.getElementById('audio-list');
+  const entries = Object.entries(audioInputs);
+  if (!entries.length) {
+    list.innerHTML = '<div style="color:var(--dim);font-size:13px;text-align:center;padding:12px;">Sin fuentes de audio</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([name, info]) => `
+    <div class="audio-row">
+      <span class="audio-name" title="${name}">${name}</span>
+      <span class="audio-vol">${info.vol > -100 ? info.vol + 'dB' : '-∞'}</span>
+      <button class="mute-btn ${info.muted ? '' : 'unmuted'}"
+        onclick="toggleMute('${name.replace(/'/g,"\\'")}')">
+        ${info.muted ? '🔇' : '🔊'}
+      </button>
+    </div>
+  `).join('');
+}
+
+async function toggleMute(name) {
+  try {
+    await obsCall('ToggleInputMute', { inputName: name });
+    // state update comes via event
+  } catch(e) { showToast('Error: ' + e); }
+}
+
+// ─── PREVIEW ───
+async function refreshPreview() {
+  const box = document.getElementById('preview-box');
+  box.innerHTML = '<div class="preview-placeholder"><span class="spinner" style="width:24px;height:24px;border-width:3px;"></span><p>Capturando...</p></div>';
+
+  try {
+    const data = await obsCall('GetSourceScreenshot', {
+      sourceName: currentScene || scenes[0] || '',
+      imageFormat: 'jpg',
+      imageWidth: 400,
+      imageCompressionQuality: 70
+    });
+    const ts = new Date().toLocaleTimeString('es-MX');
+    box.innerHTML = `<img src="${data.imageData}" style="border-radius:8px;">
+      <div class="preview-ts">${ts}</div>`;
+  } catch(e) {
+    box.innerHTML = `<div class="preview-placeholder"><span>⚠</span><p>No se pudo capturar. Asegúrate de que OBS no esté en modo de bajo rendimiento.</p></div>`;
+  }
+}
+
+// ─── STATS POLLING ───
+function startStats() {
+  statsInterval = setInterval(async () => {
+    if (!identified) return;
+    try {
+      const stats = await obsCall('GetStats');
+      const fps = stats.activeFps !== undefined ? stats.activeFps.toFixed(1) : '—';
+      const dropped = stats.outputSkippedFrames !== undefined ? stats.outputSkippedFrames : '—';
+      const cpu = stats.cpuUsage !== undefined ? stats.cpuUsage.toFixed(1) + '%' : '—';
+      document.getElementById('stat-fps').textContent = fps;
+      document.getElementById('stat-dropped').textContent = dropped;
+      document.getElementById('stat-cpu').textContent = cpu;
+    } catch(e) {}
+
+    if (isStreaming) {
+      try {
+        const stream = await obsCall('GetStreamStatus');
+        const kbps = Math.round((stream.outputBytes || 0) * 8 / 1000 / (stream.outputDuration / 1000 || 1));
+        // Use renderSkippedFrames as rough bitrate proxy if available
+        // Better: use outputBytes delta
+        updateBitrateDisplay(stream.outputBytes, stream.outputDuration);
+      } catch(e) {}
+    }
+  }, 2000);
+}
+
+let lastBytes = 0;
+let lastBytesTime = 0;
+function updateBitrateDisplay(bytes, duration) {
+  const now = Date.now();
+  let kbps = 0;
+  if (lastBytes > 0 && lastBytesTime > 0) {
+    const deltaSec = (now - lastBytesTime) / 1000;
+    const deltaBytes = bytes - lastBytes;
+    if (deltaSec > 0 && deltaBytes >= 0) kbps = Math.round(deltaBytes * 8 / deltaSec / 1000);
+  }
+  lastBytes = bytes;
+  lastBytesTime = now;
+
+  bitrateHistory.shift();
+  bitrateHistory.push(kbps);
+
+  const formatted = kbps > 0 ? kbps.toLocaleString() + ' kbps' : '—';
+  document.getElementById('footer-bitrate').textContent = formatted;
+
+  const badge = document.getElementById('bitrate-badge');
+  badge.textContent = kbps > 0 ? kbps.toLocaleString() + ' kbps' : '—';
+  badge.className = 'badge ' + (kbps > 3000 ? 'badge-ok' : kbps > 1000 ? 'badge-warn' : 'badge-offline');
+
+  drawGraph();
+}
+
+// ─── BITRATE GRAPH ───
+function initGraph() {
+  const canvas = document.getElementById('bitrateGraph');
+  graphCtx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = 80 * window.devicePixelRatio;
+  graphCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  drawGraph();
+}
+
+function drawGraph() {
+  if (!graphCtx) return;
+  const canvas = document.getElementById('bitrateGraph');
+  const w = canvas.offsetWidth;
+  const h = 80;
+  graphCtx.clearRect(0, 0, w, h);
+
+  const data = bitrateHistory;
+  const max = Math.max(...data, 1000);
+  const min = Math.min(...data.filter(v => v > 0));
+
+  // Grid lines
+  graphCtx.strokeStyle = 'rgba(255,255,255,.04)';
+  graphCtx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const y = (h / 4) * i;
+    graphCtx.beginPath();
+    graphCtx.moveTo(0, y);
+    graphCtx.lineTo(w, y);
+    graphCtx.stroke();
+  }
+
+  // Fill
+  const grad = graphCtx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(0, 212, 106, .35)');
+  grad.addColorStop(1, 'rgba(0, 212, 106, .02)');
+  graphCtx.fillStyle = grad;
+
+  graphCtx.beginPath();
+  graphCtx.moveTo(0, h);
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (v / max) * (h - 6);
+    if (i === 0) graphCtx.lineTo(x, y);
+    else graphCtx.lineTo(x, y);
+  });
+  graphCtx.lineTo(w, h);
+  graphCtx.closePath();
+  graphCtx.fill();
+
+  // Line
+  graphCtx.strokeStyle = '#00d46a';
+  graphCtx.lineWidth = 2;
+  graphCtx.lineJoin = 'round';
+  graphCtx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (v / max) * (h - 6);
+    if (i === 0) graphCtx.moveTo(x, y);
+    else graphCtx.lineTo(x, y);
+  });
+  graphCtx.stroke();
+
+  const positives = data.filter(v => v > 0);
+  if (positives.length > 0) {
+    document.getElementById('graph-min').textContent = 'Min: ' + Math.min(...positives).toLocaleString();
+    document.getElementById('graph-max').textContent = 'Max: ' + Math.max(...positives).toLocaleString();
+  }
+}
+
+// ─── UPTIME TIMER ───
+function startUptimeTimer() {
+  uptimeInterval = setInterval(() => {
+    if (!isStreaming || !streamStartTime) {
+      document.getElementById('footer-uptime').textContent = '00:00:00';
+      return;
+    }
+    const elapsed = Date.now() - streamStartTime;
+    const h = Math.floor(elapsed / 3600000);
+    const m = Math.floor((elapsed % 3600000) / 60000);
+    const s = Math.floor((elapsed % 60000) / 1000);
+    document.getElementById('footer-uptime').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+// ─── UI HELPERS ───
+function toggleSec(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  if (!body) return;
+  body.classList.toggle('hidden');
+  chevron.classList.toggle('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Resize graph on window resize
+async function autoDetectTunnel() {
+  try {
+    const res = await fetch("/tunnel");
+    const url = await res.text();
+    if (url && url.startsWith("wss://")) {
+      document.getElementById("ws-url").value = url;
+    }
+  } catch(e) {}
+}
+autoDetectTunnel();
+
+window.addEventListener('resize', () => { initGraph(); });
+
+// Handle ws disconnect during use
+setInterval(() => {
+  if (document.getElementById('app').style.display !== 'none' && (!ws || ws.readyState !== WebSocket.OPEN)) {
+    document.getElementById('conn-dot').className = 'conn-dot off';
+  }
+}, 3000);
+</script>
+</body>
+</html>
