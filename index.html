@@ -274,8 +274,9 @@
         const first    = getNext();
         const firstUrl = await getMp4Url(first.id);
         active.src = firstUrl;
-        active.load();
-        await active.play();
+active.load();
+await active.play();
+active.muted = false;
 
         // Precargar segundo
         await preloadStandby();
