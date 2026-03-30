@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>BRB — MariioTQ</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ── VIDEOS ── */
+    #video-a, #video-b {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+    #video-b { opacity: 0; }
+
+    /* ── GRADIENTE SUAVE ── */
+    #vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to top,   rgba(0,0,0,0.45) 0%, transparent 30%),
+        linear-gradient(to bottom, rgba(0,0,0,0.2)  0%, transparent 20%);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* ── TOAST CREADOR (superior izquierda) ── */
+    #creator-toast {
+      position: absolute;
+      top: 48px;
+      left: 60px;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #creator-toast .created-by {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+    #creator-toast .creator-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      letter-spacing: 3px;
+      color: #fff;
+      line-height: 1;
+    }
+    #creator-toast .clip-title {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 4px;
+      max-width: 600px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── CONEXIÓN PERDIDA (centro inferior) ── */
+    #status-wrap {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      z-index: 30;
+      pointer-events: none;
+      text-align: center;
+      animation: slideUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    @keyframes slideUp {
+      to { transform: translateX(-50%) translateY(0); }
+    }
+
+    /* Barras de señal */
+    #signal-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 28px;
+    }
+    .bar {
+      width: 7px;
+      border-radius: 2px 2px 0 0;
+      background: #e63946;
+      transform-origin: bottom;
+      animation: barAnim 1.2s ease-in-out infinite;
+    }
+    .bar:nth-child(1) { height: 30%;  animation-delay: 0.0s; }
+    .bar:nth-child(2) { height: 50%;  animation-delay: 0.15s; }
+    .bar:nth-child(3) { height: 70%;  animation-delay: 0.30s; }
+    .bar:nth-child(4) { height: 90%;  animation-delay: 0.45s; }
+    .bar:nth-child(5) { height: 100%; animation-delay: 0.60s; }
+
+    @keyframes barAnim {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    #status-wrap .line1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 30px;
+      letter-spacing: 9px;
+      color: #fff;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    #status-wrap .line2 {
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 5px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+    }
+
+    /* Puntos animados */
+    .dot-anim {
+      display: inline-block;
+      animation: dotFade 1.5s ease-in-out infinite;
+    }
+    .dot-anim:nth-child(1) { animation-delay: 0.0s; }
+    .dot-anim:nth-child(2) { animation-delay: 0.3s; }
+    .dot-anim:nth-child(3) { animation-delay: 0.6s; }
+    @keyframes dotFade {
+      0%, 100% { opacity: 0; }
+      40%, 60%  { opacity: 1; }
+    }
+
+    /* ── TOAST SUB (superior derecha) ── */
+    #sub-toast {
+      position: absolute;
+      top: 48px;
+      right: 60px;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      text-align: right;
+    }
+    #sub-toast .sub-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #e63946;
+      margin-bottom: 4px;
+    }
+    #sub-toast .sub-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      letter-spacing: 3px;
+      color: #fff;
+      line-height: 1;
+    }
+    #sub-toast .sub-msg {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 2px;
+      margin-top: 3px;
+    }
+
+    /* ── CARGA ── */
+    #loading {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #000; gap: 18px; z-index: 50;
+    }
+    .dots { display: flex; gap: 10px; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #e63946;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+    #loading p {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 5px; text-transform: uppercase; color: #333;
+    }
+    @keyframes blink {
+      0%,100% { opacity:.2; transform:scale(.7); }
+      50%      { opacity:1;  transform:scale(1); }
+    }
+
+    #error {
+      display: none; position: absolute; inset: 0;
+      align-items: center; justify-content: center;
+      background: #000; color: #333;
+      font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body>
+
+  <video id="video-a" autoplay playsinline muted></video>
+  <video id="video-b" playsinline muted></video>
+  <div id="vignette"></div>
+
+  <!-- Nombre del creador -->
+  <div id="creator-toast">
+    <div class="created-by">clip creado por</div>
+    <div class="creator-name" id="creator-name-text"></div>
+    <div class="clip-title"   id="creator-clip-title"></div>
+  </div>
+
+  <!-- Conexión perdida con barras de señal -->
+  <div id="status-wrap">
+    <div id="signal-bars">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <div class="line1">Conexión perdida</div>
+    <div class="line2">
+      Vuelvo en un momento<span class="dot-anim">.</span><span class="dot-anim">.</span><span class="dot-anim">.</span>
+    </div>
+  </div>
+
+  <!-- Sub toast -->
+  <div id="sub-toast">
+    <div class="sub-label">¡Nuevo sub!</div>
+    <div class="sub-name" id="sub-name-text"></div>
+    <div class="sub-msg"  id="sub-msg-text"></div>
+  </div>
+
+  <div id="loading">
+    <div class="dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <p>Cargando clips…</p>
+  </div>
+
+  <div id="error">No hay clips disponibles</div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    //  CONFIGURACIÓN
+    // ═══════════════════════════════════════════
+    const CLIENT_ID         = '8guuqqrcoegsja82dwufpbrlnn180s';
+    const ACCESS_TOKEN      = 'di4qtnpkf1m4s17cr9ggnzyufx7mf1';
+    const CHANNEL           = 'mariotq';
+    const FEATURED          = true;
+    const HIDE_CREATOR_FOR  = ['aizulimx'];  // nombres en minúsculas
+    // ═══════════════════════════════════════════
+
+    const vA           = document.getElementById('video-a');
+    const vB           = document.getElementById('video-b');
+    const loading      = document.getElementById('loading');
+    const errorEl      = document.getElementById('error');
+    const creatorToast = document.getElementById('creator-toast');
+    const creatorName  = document.getElementById('creator-name-text');
+    const creatorTitle = document.getElementById('creator-clip-title');
+    const subToast     = document.getElementById('sub-toast');
+    const subNameEl    = document.getElementById('sub-name-text');
+    const subMsgEl     = document.getElementById('sub-msg-text');
+
+    let playlist   = [];
+    let shuffled   = [];
+    let idx        = 0;
+    let lastClipId = null;
+    let active     = vA;
+    let standby    = vB;
+    let swapping   = false;
+
+    // ── Shuffle ──────────────────────────────────
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function getNext() {
+      if (idx >= shuffled.length) { shuffled = shuffle(playlist); idx = 0; }
+      let clip = shuffled[idx];
+      if (clip.id === lastClipId && shuffled.length > 1) {
+        idx = (idx + 1) % shuffled.length;
+        clip = shuffled[idx];
+      }
+      idx++;
+      return clip;
+    }
+
+    function peekNext() {
+      let peekIdx = idx % shuffled.length;
+      let clip    = shuffled[peekIdx];
+      if (clip.id === lastClipId && shuffled.length > 1) {
+        peekIdx = (peekIdx + 1) % shuffled.length;
+        clip    = shuffled[peekIdx];
+      }
+      return clip;
+    }
+
+    // ── Toast creador ────────────────────────────
+    let creatorTimer;
+    function showCreator(clip) {
+      // No mostrar si el creador está en la lista de ocultos
+      if (HIDE_CREATOR_FOR.includes(clip.creator_name.toLowerCase())) return;
+
+      creatorName.textContent  = clip.creator_name;
+      creatorTitle.textContent = clip.title;
+      creatorToast.style.opacity = '1';
+      clearTimeout(creatorTimer);
+      creatorTimer = setTimeout(() => {
+        creatorToast.style.opacity = '0';
+      }, 2500);
+    }
+
+    // ── Toast sub ────────────────────────────────
+    let subTimer;
+    function showSub(username, message) {
+      subNameEl.textContent  = username;
+      subMsgEl.textContent   = message || '¡Gracias por el sub!';
+      subToast.style.opacity = '1';
+      clearTimeout(subTimer);
+      subTimer = setTimeout(() => {
+        subToast.style.opacity = '0';
+      }, 5000);
+    }
+
+    // ── GQL Twitch ───────────────────────────────
+    async function getMp4Url(slug) {
+      const res = await fetch('https://gql.twitch.tv/gql', {
+        method: 'POST',
+        headers: {
+          'Client-Id': 'kimne78kx3ncx6brgo4mv6wki5h1ko',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{
+          operationName: 'VideoAccessToken_Clip',
+          variables: { slug },
+          extensions: {
+            persistedQuery: {
+              version: 1,
+              sha256Hash: '36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11'
+            }
+          }
+        }])
+      });
+      const data      = await res.json();
+      const clip      = data[0]?.data?.clip;
+      const qualities = clip?.videoQualities;
+      const token     = clip?.playbackAccessToken;
+      if (!qualities?.length || !token) throw new Error(`Sin datos para ${slug}`);
+      const q   = qualities.find(q => q.quality === '1080') || qualities[0];
+      const url = new URL(q.sourceURL);
+      url.searchParams.set('sig',   token.signature);
+      url.searchParams.set('token', token.value);
+      return url.toString();
+    }
+
+    // ── Precargar standby ────────────────────────
+    let standbyClip = null;
+    async function preloadStandby() {
+      try {
+        standbyClip = peekNext();
+        const url   = await getMp4Url(standbyClip.id);
+        standby.src         = url;
+        standby.currentTime = 0;
+        standby.load();
+      } catch (e) {
+        console.warn('Error precargando:', e);
+      }
+    }
+
+    // ── Swap ─────────────────────────────────────
+    async function swap() {
+      if (swapping) return;
+      swapping = true;
+
+      // Reset al inicio antes de mostrar
+      standby.currentTime   = 0;
+      active.style.opacity  = '0';
+      standby.style.opacity = '1';
+      standby.muted = false;
+      standby.play().catch(() => {});
+
+      const tmp = active;
+      active  = standby;
+      standby = tmp;
+
+      // ← FIX: mostrar el creador del clip que ACABA de aparecer (standbyClip)
+      if (standbyClip) {
+        lastClipId = standbyClip.id;
+        showCreator(standbyClip);
+      }
+
+      idx++;
+      if (idx >= shuffled.length) { shuffled = shuffle(playlist); idx = 0; }
+      await preloadStandby();
+
+      swapping = false;
+    }
+
+    // ── Helix API ────────────────────────────────
+    async function twitchGet(url) {
+      const res = await fetch(url, {
+        headers: {
+          'Client-Id': CLIENT_ID,
+          'Authorization': `Bearer ${ACCESS_TOKEN}`,
+        }
+      });
+      if (!res.ok) throw new Error(`Twitch ${res.status}`);
+      return res.json();
+    }
+
+    // ── PubSub ───────────────────────────────────
+    function connectPubSub(channelId) {
+      const ws = new WebSocket('wss://pubsub-edge.twitch.tv');
+      ws.onopen = () => {
+        setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN)
+            ws.send(JSON.stringify({ type: 'PING' }));
+        }, 240000);
+        ws.send(JSON.stringify({
+          type: 'LISTEN',
+          data: {
+            topics: [`channel-subscribe-events-v1.${channelId}`],
+            auth_token: ACCESS_TOKEN,
+          }
+        }));
+      };
+      ws.onmessage = (event) => {
+        try {
+          const msg  = JSON.parse(event.data);
+          if (msg.type !== 'MESSAGE') return;
+          const data = JSON.parse(msg.data.message);
+          const username = data.display_name || data.user_name || 'Anónimo';
+          const months   = data.cumulative_months;
+          const subMsg   = months > 1 ? `${months} meses seguidos 🔥` : '¡Primer sub!';
+          showSub(username, subMsg);
+        } catch (e) { /* silencioso */ }
+      };
+      ws.onclose = () => { setTimeout(() => connectPubSub(channelId), 5000); };
+    }
+
+    // ── Init ─────────────────────────────────────
+    async function init() {
+      try {
+        const users = await twitchGet(
+          `https://api.twitch.tv/helix/users?login=${CHANNEL}`
+        );
+        const uid = users.data?.[0]?.id;
+        if (!uid) throw new Error('Canal no encontrado');
+
+        const clips = [];
+        let cursor  = null;
+        let pages   = 0;
+        do {
+          const url = new URL('https://api.twitch.tv/helix/clips');
+          url.searchParams.set('broadcaster_id', uid);
+          url.searchParams.set('first', '100');
+          if (FEATURED) url.searchParams.set('is_featured', 'true');
+          if (cursor)   url.searchParams.set('after', cursor);
+          const data = await twitchGet(url.toString());
+          clips.push(...(data.data || []));
+          cursor = data.pagination?.cursor || null;
+          pages++;
+          if (pages >= 10) break;
+        } while (cursor);
+
+        if (clips.length === 0) throw new Error('Sin clips');
+
+        playlist = clips;
+        shuffled = shuffle(playlist);
+        idx      = 0;
+
+        const first    = getNext();
+        const firstUrl = await getMp4Url(first.id);
+        lastClipId       = first.id;
+        active.src       = firstUrl;
+        active.currentTime = 0;
+        active.load();
+        await active.play();
+        active.muted = false;
+        showCreator(first);
+
+        await preloadStandby();
+        loading.style.display = 'none';
+
+        connectPubSub(uid);
+
+      } catch (e) {
+        console.error('Error al iniciar:', e);
+        loading.style.display = 'none';
+        errorEl.style.display = 'flex';
+      }
+    }
+
+    vA.addEventListener('ended', swap);
+    vB.addEventListener('ended', swap);
+    vA.addEventListener('error', () => { swapping = false; setTimeout(swap, 300); });
+    vB.addEventListener('error', () => { swapping = false; setTimeout(swap, 300); });
+
+    init();
+  </script>
+
+</body>
+</html>
