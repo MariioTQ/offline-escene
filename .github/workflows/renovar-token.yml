@@ -1,0 +1,51 @@
+name: Renovar Token de Twitch
+
+on:
+  schedule:
+    # Corre el día 1 de cada mes a las 6am UTC
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+    # También se puede correr manualmente desde GitHub Actions
+
+jobs:
+  renovar-token:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repo
+        uses: actions/checkout@v4
+
+      - name: Obtener nuevo Access Token de Twitch
+        id: token
+        run: |
+          RESPONSE=$(curl -s -X POST "https://id.twitch.tv/oauth2/token" \
+            -d "client_id=${{ secrets.TWITCH_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.TWITCH_CLIENT_SECRET }}" \
+            -d "grant_type=client_credentials")
+
+          TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+          if [ -z "$TOKEN" ]; then
+            echo "Error: no se pudo obtener el token"
+            echo $RESPONSE
+            exit 1
+          fi
+
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+          echo "Token obtenido correctamente"
+
+      - name: Actualizar token en index.html
+        run: |
+          # Reemplaza la línea del access token en index.html
+          sed -i "s/const ACCESS_TOKEN.*=.*'[^']*'/const ACCESS_TOKEN      = '${{ steps.token.outputs.token }}'/" index.html
+
+          # Verificar que el cambio se hizo
+          grep "ACCESS_TOKEN" index.html
+
+      - name: Commit y push del nuevo token
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "🔑 Token de Twitch renovado automáticamente"
+          git push
